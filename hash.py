@@ -2,10 +2,6 @@ import os
 import json
 import hashlib
 
-class File:
-    def __init__(self):
-        pass
-
 class Hasher:
     def __init__(self, sizeMin, inDir, outDir):
         self.sizeMin = sizeMin

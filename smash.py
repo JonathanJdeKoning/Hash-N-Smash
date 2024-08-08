@@ -1,5 +1,44 @@
 import json
 import psycopg2
+import os.path
+defaultDBPath = "./config/defaultDB.json"
+
+class Smasher:
+    def __init__(self):
+
+        if os.path.isfile(defaultDBPath):
+            with open(defaultDBPath, "r") as defaultFile:
+                defaultData = json.load(defaultFile)
+                self.host = defaultData["host"]
+                self.db = defaultData["db"]
+                self.user = defaultData["user"]
+                self.port= defaultData["port"]
+                self.table = defaultData["table"]
+                self.path = defaultData["path"]
+        else:
+            print("Default info not found... Asking Manually:")
+
+            self.host = input("hostname: ").strip()
+            self.db = input("database name:: ").strip()
+            self.user = input("username: ").strip()
+            self.port = input("port number: ").strip()
+            self.table = input("table name: ").strip()
+            self.path = input("path to file: ").strip()
+
+            if input("Save as default? (y/n)").lower() == "n": return
+
+            defaultJson = {
+                    "host" : self.host,
+                    "db"   : self.db,
+                    "user" : self.user,
+                    "port" : self.port,
+                    "table": self.table,
+                    "path" : self.path
+            }
+
+            with open (defaultDBPath, "w") as defaultFile:
+                json.dump(defaultJson, defaultFile)
+
 def load_json_data(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
@@ -15,24 +54,18 @@ def insert_data_to_db(data, conn):
         conn.commit()
 
 def main():
-    hostname = "localhost"
-    database = "smashed"
-    username = "dekoding"
-    pwd = "admin"
-    port_id = 5432
-
-    table_name = "files"
-    json_file_path = "/home/kali/hashnsmash/logs/hashes.json"
+    mySmasher = Smasher()
+    pwd = input("password:").strip()
 
     conn = psycopg2.connect(
-        host=hostname,
-        dbname=database,
+        host=mySmasher.host,
+        dbname=mySmasher.db,
         password=pwd,
-        user=username,
-        port=port_id
+        user=mySmasher.user,
+        port=mySmasher.port
     )
     
-    data = load_json_data(json_file_path)
+    data = load_json_data(mySmasher.path)
     try:
         # Insert data into the database
         insert_data_to_db(data, conn)
