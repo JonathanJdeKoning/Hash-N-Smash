@@ -1,6 +1,9 @@
 import json
 import os
+import hashlib
 from helpers import loadJson, dumpJson
+
+#/home/kali/openipc-firmware/firmware_mod/v2
 
 class Hasher:
     def __init__(self):
@@ -27,20 +30,20 @@ class Hasher:
     def recurse(self, itemPath):
         for item in os.listdir(itemPath):
             jsonObj = {}
-            itemPath = os.path.join(itemPath, item)
+            newPath = os.path.join(itemPath, item)
             
-            if os.path.isfile(itemPath) and os.path.getsize(itemPath)>=self.sizeMin:
-                fileHash = self.hash(itemPath)
+            if os.path.isfile(newPath) and os.path.getsize(newPath)>=self.sizeMin:
+                fileHash = self.hash(newPath)
 
-                jsonObj["fileName"] = itemPath
+                jsonObj["fileName"] = newPath
                 jsonObj["fileHash"] = fileHash
 
                 self.jsonData.append(jsonObj)
                         
-            elif os.path.isdir(itemPath):
-                self.recurse(itemPath)
+            elif os.path.isdir(newPath):
+                self.recurse(newPath)
     def writeHashes(self):
-        jsonDump(self.jsonData, f"{self.outDir}/hashes.json")
+        dumpJson(self.jsonData, f"{self.outDir}/hashes.json")
 
 
 

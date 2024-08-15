@@ -1,0 +1,8 @@
+{
+    "host": "localhost",
+    "db": "db",
+    "user": "postgres",
+    "port": "5432",
+    "table": "files",
+    "path": "/home/kali/Hash-N-Smash/logs/hashes.json"
+}

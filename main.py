@@ -1,4 +1,5 @@
-from HasherNSmasher import Hasher, Smasher
+from Hasher import Hasher
+from Smasher import Smasher
 
 myHasher = Hasher()
 myHasher.getHashes()

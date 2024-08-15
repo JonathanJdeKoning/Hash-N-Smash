@@ -1,5 +1,6 @@
 import os
 import json
+import psycopg2
 from helpers import loadJson, dumpJson
 
 defaultDBPath = "./config/defaultDB.json"
@@ -27,7 +28,6 @@ class Smasher:
 
             if input("Save as default? (y/n)").lower() == "n": return
 
-            pwd = input("password:").strip()
             defaultJson = {
                     "host" : self.host,
                     "db"   : self.db,
@@ -36,27 +36,12 @@ class Smasher:
                     "table": self.table,
                     "path" : self.path
             }
-            dumpJson(defaultJson, defaultFile)
+            dumpJson(defaultJson, defaultDBPath)
 
-    def connect(self):
-        conn = psycopg2.connect(
-            host=self.host,
-            dbname=self.db,
-            user=self.user,
-            port=self.port,
-            password=pwd
-        )
+        self.pwd = input("password:").strip()
 
-        data = loadJson(self.path)
-            try:
-                insertData(data, conn)
-                print("Data imported successfully.")
-            except Exception as e:
-                print(f"An error occurred: {str(e)}")
-            finally:
-                conn.close()
-    
-    def insertData(data, conn):
+
+    def insertData(self, data, conn):
         with conn.cursor() as cursor:
             insert_query = f"""
             INSERT INTO {self.table} (fileName, fileHash)
@@ -68,4 +53,24 @@ class Smasher:
 
 
 
+
+
+    def connect(self):
+        conn = psycopg2.connect(
+            host=self.host,
+            dbname=self.db,
+            user=self.user,
+            port=self.port,
+            password=self.pwd
+        )
+
+        data = loadJson(self.path)
+        try:
+            self.insertData(data, conn)
+            print("Data imported successfully.")
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+        finally:
+            conn.close()
+    
 
