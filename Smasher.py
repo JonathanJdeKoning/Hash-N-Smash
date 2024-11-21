@@ -20,7 +20,7 @@ class Smasher:
             print("Default info not found... Asking Manually:")
 
             self.host = input("hostname: ").strip()
-            self.db = input("database name:: ").strip()
+            self.db = input("database name: ").strip()
             self.user = input("username: ").strip()
             self.port = input("port number: ").strip()
             self.table = input("table name: ").strip()
@@ -44,16 +44,29 @@ class Smasher:
     def insertData(self, data, conn):
         with conn.cursor() as cursor:
             insert_query = f"""
-            INSERT INTO {self.table} (fileName, fileHash)
-            VALUES (%s, %s)
+            INSERT INTO {self.table} (
+                key_hash, recursion_level, bytes, mtime, path, 
+                path_base64, path_coding, name, name_base64, 
+                name_coding, extension, extension_base64, extension_coding
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             for entry in data:
-                cursor.execute(insert_query, (entry['fileName'], entry['fileHash']))
+                cursor.execute(insert_query, (
+                    entry['key_hash'], 
+                    entry['recursion_level'], 
+                    entry['bytes'], 
+                    entry['mtime'], 
+                    entry['path'], 
+                    entry['path_base64'], 
+                    entry['path_coding'], 
+                    entry['name'], 
+                    entry['name_base64'], 
+                    entry['name_coding'], 
+                    entry['extension'], 
+                    entry['extension_base64'], 
+                    entry['extension_coding']
+                ))
             conn.commit()
-
-
-
-
 
     def connect(self):
         conn = psycopg2.connect(
