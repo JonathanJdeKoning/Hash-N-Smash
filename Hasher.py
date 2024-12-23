@@ -2,72 +2,67 @@ import json
 import os
 from math import inf
 import hashlib
-from base64 import b64encode
-from helpers import loadJson, dumpJson
+from helpers import loadJson, dumpJson, b64, extension
+from datatypes import FileData
+from dataclasses import asdict
 
-#/home/kali/openipc-firmware/firmware_mod/v2
+#C:/Users/jj720/IOT/firmware
 
 class Hasher:
-    def __init__(self):
-        self.sizeMin = int(input("Minimum size to hash? (in bytes): "))
-        self.sizeMax = input("Maximum? (leave blank for None): ")
-        if self.sizeMax == "": self.sizeMax = inf
-        else: self.sizeMax = int(self.sizeMax)
-        self.inDir   = input("Folder to hash: ")
-        self.outDir  = input("Folder to save results: ")
-        self.jsonData= []
-    
-    def hash(self, filePath):
-        BLOCK_SIZE = 65536
-        fileHash = hashlib.sha256()
-        
-        with open(filePath, 'rb') as file:
-            fileBytes = file.read(BLOCK_SIZE)
-            while len(fileBytes) > 0:
-                fileHash.update(fileBytes)
-                fileBytes = file.read(BLOCK_SIZE)
+    def __init__(self, size_min, size_max, in_dir, out_dir):
+        self.json_data = []
 
-        return fileHash.hexdigest()
+        self.size_min = size_min
+        self.size_max = size_max
+        self.in_dir = in_dir
+        self.out_dir = out_dir
+    
+    def hash(self, file_path):
+        BLOCK_SIZE = 65536
+        file_hash = hashlib.sha256()
+        
+        with open(file_path, 'rb') as file:
+            file_bytes = file.read(BLOCK_SIZE)
+            while len(file_bytes) > 0:
+                file_hash.update(file_bytes)
+                file_bytes = file.read(BLOCK_SIZE)
+
+        return file_hash.hexdigest()
 
     def getHashes(self):
-        self.recurse(self.inDir, 0)
+        self.recurse(self.in_dir, 0)
     
-    def recurse(self, itemPath, level):
-        for item in os.listdir(itemPath):
-            jsonObj = {}
-            newPath = os.path.join(itemPath, item)
-            itemExtension = item.split(".")[-1]
-            if itemExtension == item: itemExtension = None
-
-            numBytes = os.path.getsize(newPath)
-            mTime = os.path.getmtime(newPath)
-
-            if os.path.isfile(newPath) and numBytes >= self.sizeMin and numBytes <= self.sizeMax:
-                fileHash = self.hash(newPath)
-               
-                jsonObj["key_hash"] = fileHash
-                jsonObj["recursion_level"] = level
-                jsonObj["bytes"] = numBytes
-                jsonObj["mtime"] = mTime
-
-                jsonObj["path"] = itemPath
-                jsonObj["path_base64"] = str(b64encode(newPath.encode("ascii")))
-                jsonObj["path_coding"] = "ascii"
+    def recurse(self, item_path, level):
+        for item in os.listdir(item_path):
+            new_path = os.path.join(item_path, item)
+            item_extension = extension(item)
+            num_bytes = os.path.getsize(new_path)
+            mTime = os.path.getmtime(new_path)
+            if os.path.isfile(new_path) and num_bytes >= self.size_min and num_bytes <= self.size_max:
+                file_hash = self.hash(new_path)
+                file = FileData(
+                    name=item,
+                    name_base64=b64(item),
+                    name_coding="ascii",
+                    path=item_path,
+                    path_base64=b64(item_path),
+                    path_coding="ascii",
+                    extension=item_extension,
+                    extension_base64=b64(item_extension),
+                    extension_coding="ascii",
+                    key_hash=file_hash,
+                    recursion_level=level,
+                    bytes=num_bytes,
+                    mtime=mTime,
+                )
                 
-                jsonObj["name"] = item
-                jsonObj["name_base64"] = str(b64encode(item.encode("ascii")))
-                jsonObj["name_coding"] = "ascii"
-                
-                jsonObj["extension"] = itemExtension
-                jsonObj["extension_base64"] = str(b64encode(itemExtension.encode("ascii"))) if itemExtension else None
-                jsonObj["extension_coding"] = "ascii" if itemExtension else None
-                
-                self.jsonData.append(jsonObj)
+                self.json_data.append(asdict(file))
                         
-            elif os.path.isdir(newPath):
-                self.recurse(newPath, level + 1)
+            elif os.path.isdir(new_path):
+                self.recurse(new_path, level + 1)
+
     def writeHashes(self):
-        dumpJson(self.jsonData, f"{self.outDir}/hashes.json")
+        dumpJson(self.json_data, f"{self.out_dir}/metadata.json")
 
 
 

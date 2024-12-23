@@ -1,11 +1,15 @@
-from Hasher import Hasher
-from Smasher import Smasher
+from menu import Menu
+"""
+C:/Users/jj720/IOT/firmware
+"""
+menu = Menu()
+menu.main_menu()
 
-myHasher = Hasher()
-myHasher.getHashes()
-myHasher.writeHashes()
 
-mySmasher = Smasher()
-mySmasher.connect()
+
+
+
+#mySmasher = Smasher()
+#mySmasher.connect()
 
 
