@@ -1,8 +1,6 @@
 {
     "host": "localhost",
-    "db": "postgres",
+    "db": "iot",
     "user": "postgres",
-    "port": "5432",
-    "table": "files",
-    "path": "/home/kali/Hash-N-Smash/logs/hashes.json"
+    "port": "6543"
 }
