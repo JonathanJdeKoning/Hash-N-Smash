@@ -1,16 +1,18 @@
 from Hasher import Hasher
-from Smasher import Smasher
+from Smasher import FileData, ApplicationData, ManufacturerData, OperatingSystemData, connect 
 from math import inf
-from datatypes import ApplicationData, ManufacturerData, OperatingSytemData
-from helpers import b64, dumpJson, print_header
+from helpers import b64, loadJson, dumpJson, print_header
 from dataclasses import asdict
 DASH_COUNT = 20
 
 class Menu:
-    def __init__(self):
+    def __init__(self, session):
         print_header("CONFIG")
         self.in_dir = input("Input Directory: ")
         self.out_dir = input("Output Directory: ")
+        self.session = session
+
+
 
 
     def main_menu(self):
@@ -32,8 +34,7 @@ class Menu:
         if option == 0:
             self.hasher_menu()
         elif option == 1:
-            # Run Smasher
-            pass
+            self.smasher_menu() 
         elif option == 2:
             self.manual_menu()
         elif option == 3:
@@ -50,6 +51,15 @@ class Menu:
         myHasher = Hasher(size_min, size_max, self.in_dir, self.out_dir)
         myHasher.getHashes()
         myHasher.writeHashes()
+
+    def smasher_menu(self):
+        fileJson = loadJson(f"{self.out_dir}/metadata.json")
+        for fileObj in fileJson:
+            fileData = FileData(**fileObj)
+            self.session.add(fileData)
+        print("Added Metadata")
+
+
 
     def manual_menu(self):
         print_header("MANUAL")
@@ -129,8 +139,9 @@ class Menu:
             creation_date=creation_date,
             update_date=update_date, 
         )
-
-        dumpJson(asdict(manufacturer_data), f"{self.out_dir}/manufacturer.json")
+        if input("Add to PostgreSQL? (y/n)\n>").lower() == "y":
+            self.session.add(manufacturer_data)
+            print("Added Manufacturer Data")
     
     
     def application_menu(self):
@@ -159,21 +170,22 @@ class Menu:
             creation_date=creation_date,
             update_date=update_date,
         )
-        dumpJson(asdict(app_data), f"{self.out_dir}/application.json")
+        if input("Add to PostgreSQL? (y/n)\n>").lower() == "y":
+            self.session.add(app_data)
+            print("Added Application Data")
 
 
     
     def operating_system_menu(self):
         print_header("OPERATING SYSTEM")
-        
-        name = input("Name: ") or None
+        name = input("Name: ") or None 
         name_b64 = b64(name)  or None
         name_coding = "ascii" or None
         version = input("Version: ") or None
         architecture = input("Architecture: ") or None
         creation_date = input("Creation Date: ") or None
         update_date = input("Update Date: ") or None
-        operating_system_data = OperatingSytemData(
+        operating_system_data = OperatingSystemData(
             name=name,
             name_b64=name_b64,
             name_coding=name_coding,
@@ -183,5 +195,7 @@ class Menu:
             update_date=update_date,
         )
 
-        dumpJson(asdict(operating_system_data), f"{self.out_dir}/operatingsystem.json")
+        if input("Add to PostgreSQL? (y/n)\n>").lower() == "y":
+            self.session.add(operating_system_data)
+            print("Added OS Data")
 

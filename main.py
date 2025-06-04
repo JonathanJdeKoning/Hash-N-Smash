@@ -1,15 +1,10 @@
 from menu import Menu
+from Smasher import connect
 """
 C:/Users/jj720/IOT/firmware
 """
-menu = Menu()
+session = connect()
+menu = Menu(session)
 menu.main_menu()
-
-
-
-
-
-#mySmasher = Smasher()
-#mySmasher.connect()
-
-
+session.commit()
+session.close()

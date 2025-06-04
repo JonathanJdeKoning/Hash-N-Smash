@@ -1,89 +1,99 @@
-import os
-import json
-import psycopg2
-from helpers import loadJson, dumpJson
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship, sessionmaker, declarative_base
+from sqlalchemy import create_engine
+from helpers import loadJson
 
-defaultDBPath = "./config/defaultDB.json"
-class Smasher:
-    def __init__(self):
+Base = declarative_base()
+class ManufacturerData(Base):
+    __tablename__ = "manufacturer_data"
 
-        if os.path.isfile(defaultDBPath):
-            defaultData = loadJson(defaultDBPath)
-            
-            self.host = defaultData["host"]
-            self.db = defaultData["db"]
-            self.user = defaultData["user"]
-            self.port= defaultData["port"]
-            self.table = defaultData["table"]
-            self.path = defaultData["path"]
-        else:
-            print("Default info not found... Asking Manually:")
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    name_b64 = Column(String)
+    name_coding = Column(String)
+    address1 = Column(String)
+    address1_b64 = Column(String)
+    address1_coding = Column(String)
+    address2 = Column(String)
+    address2_b64 = Column(String)
+    address2_coding = Column(String)
+    city = Column(String)
+    city_b64 = Column(String)
+    city_coding = Column(String)
+    stateprov = Column(String)
+    postal_code = Column(String)
+    country = Column(String)
+    telephone = Column(String)
+    fax = Column(String)
+    url = Column(String)
+    url_b64 = Column(String)
+    url_coding = Column(String)
+    email = Column(String)
+    creation_date = Column(String)
+    update_date = Column(String)
 
-            self.host = input("hostname: ").strip()
-            self.db = input("database name: ").strip()
-            self.user = input("username: ").strip()
-            self.port = input("port number: ").strip()
-            self.table = input("table name: ").strip()
-            self.path = input("path to file: ").strip()
+class FileData(Base):
+    __tablename__ = "file_data"
 
-            if input("Save as default? (y/n)").lower() == "n": return
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    name_base64 = Column(String)
+    name_coding = Column(String)
+    path = Column(String)
+    path_base64 = Column(String)
+    path_coding = Column(String)
+    extension = Column(String)
+    extension_base64 = Column(String)
+    extension_coding = Column(String)
+    key_hash = Column(String)
+    recursion_level = Column(Integer)
+    bytes = Column(Integer)
+    mtime = Column(Float)
+    manufacturer_id = Column(Integer, ForeignKey("manufacturer_data.id"))
+    manufacturer = relationship("ManufacturerData")
 
-            defaultJson = {
-                    "host" : self.host,
-                    "db"   : self.db,
-                    "user" : self.user,
-                    "port" : self.port,
-                    "table": self.table,
-                    "path" : self.path
-            }
-            dumpJson(defaultJson, defaultDBPath)
+class ApplicationData(Base):
+    __tablename__ = "application_data"
 
-        self.pwd = input("password:").strip()
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    name_b64 = Column(String)
+    name_coding = Column(String)
+    version = Column(String)
+    poe = Column(String)
+    build = Column(String)
+    latest_copyright = Column(String)
+    other = Column(String, nullable=True)
+    creation_date = Column(String)
+    update_date = Column(String)
+
+class OperatingSystemData(Base):
+    __tablename__ = "operating_system_data"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    name_b64 = Column(String)
+    name_coding = Column(String)
+    version = Column(String)
+    architecture = Column(String)
+    creation_date = Column(String)
+    update_date = Column(String)
 
 
-    def insertData(self, data, conn):
-        with conn.cursor() as cursor:
-            insert_query = f"""
-            INSERT INTO {self.table} (
-                key_hash, recursion_level, bytes, mtime, path, 
-                path_base64, path_coding, name, name_base64, 
-                name_coding, extension, extension_base64, extension_coding
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            for entry in data:
-                cursor.execute(insert_query, (
-                    entry['key_hash'], 
-                    entry['recursion_level'], 
-                    entry['bytes'], 
-                    entry['mtime'], 
-                    entry['path'], 
-                    entry['path_base64'], 
-                    entry['path_coding'], 
-                    entry['name'], 
-                    entry['name_base64'], 
-                    entry['name_coding'], 
-                    entry['extension'], 
-                    entry['extension_base64'], 
-                    entry['extension_coding']
-                ))
-            conn.commit()
+# PostgreSQL Connection
+def connect():
+    config = loadJson("config/defaultDB.json")
+    password = input("Password:\n")
+    DATABASE_URL = f"postgresql://{config["user"]}:{password}@{config["host"]}:{config["port"]}/{config["db"]}"
+    print("You are now connected!")
+    print(f"User: {config["user"]}")
+    print(f"Port: {config["port"]}")
+    print(f"Database: {config["db"]}")
+    print(f"Host: {config["host"]}")
+    engine = create_engine(DATABASE_URL)
+    SessionLocal = sessionmaker(bind=engine)
 
-    def connect(self):
-        conn = psycopg2.connect(
-            host=self.host,
-            dbname=self.db,
-            user=self.user,
-            port=self.port,
-            password=self.pwd
-        )
-
-        data = loadJson(self.path)
-        try:
-            self.insertData(data, conn)
-            print("Data imported successfully.")
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-        finally:
-            conn.close()
-    
-
+    # Create tables
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    return SessionLocal()
