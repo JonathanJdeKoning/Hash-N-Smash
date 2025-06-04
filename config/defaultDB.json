@@ -1,6 +1,6 @@
 {
     "host": "localhost",
-    "db": "iot",
+    "db": "db",
     "user": "postgres",
-    "port": "6543"
+    "port": "5432"
 }

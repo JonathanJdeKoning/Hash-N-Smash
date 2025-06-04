@@ -84,12 +84,12 @@ class OperatingSystemData(Base):
 def connect():
     config = loadJson("config/defaultDB.json")
     password = input("Password:\n")
-    DATABASE_URL = f"postgresql://{config["user"]}:{password}@{config["host"]}:{config["port"]}/{config["db"]}"
+    DATABASE_URL = f"postgresql://{config['user']}:{password}@{config['host']}:{config['port']}/{config['db']}"
     print("You are now connected!")
-    print(f"User: {config["user"]}")
-    print(f"Port: {config["port"]}")
-    print(f"Database: {config["db"]}")
-    print(f"Host: {config["host"]}")
+    print(f"User: {config['user']}")
+    print(f"Port: {config['port']}")
+    print(f"Database: {config['db']}")
+    print(f"Host: {config['host']}")
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(bind=engine)
 
